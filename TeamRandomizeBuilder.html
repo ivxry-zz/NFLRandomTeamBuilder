@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Team Generator Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .tab-container {
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .tab.active {
+            background-color: #45a049;
+        }
+
+        .position-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        .position-box {
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .position-box.locked {
+            background-color: rgba(0, 128, 0, 0.5);
+        }
+
+        .position-name {
+            text-align: center;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        #generate-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #generate-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>NFL Team Generator Game</h1>
+
+    <div class="tab-container">
+        <button id="generate-btn">Generate Random Players</button>
+    </div>
+
+    <div class="position-container" id="positions-container">
+        <!-- Positions and their boxes will be generated here -->
+    </div>
+
+    <script>
+        const offensePositions = ["QB", "RB1", "RB2", "WR1", "WR2", "WR3", "WR4", "TE1", "TE2", "LT", "LG", "C", "RG", "RT"];
+        const defensePositions = ["DT1", "DT2", "MLB1", "MLB2", "ROLB", "LOLB", "RE", "LE", "CB1", "CB2", "CB3", "CB4", "FS", "SS"];
+        
+        // Updated 2025 placeholder list of players
+        const players = {
+            "QB": ["Lamar Jackson", "Josh Allen", "Joe Burrow", "Jayden Daniels", "Jordan Love", "Patrick Mahomes", "Brock Purdy", "Jared Goff", "Kyler Murray", "Jalen Hurts", "Matthew Stafford", "Derek Carr", "Sam Darnold", "Justin Herbert", "Tua Tagovailoa", "Baker Mayfield", "Drake Maye", "Trevor Lawrence", "Jameis Winston", "Bo Nix", "Geno Smith", "Kirk Cousins", "Russell Wilson", "C.J. Stroud", "Aaron Rodgers", "Bryce Young", "Daniel Jones", "Anthony Richardson", "Dak Prescott", "Caleb Williams", "Cooper Rush", "Gardner Minshew", "Will Levis"],
+            "RB1": ["Saquon Barkley", "Derrick Henry", "Kyren Williams", "Bijan Robinson", "Josh Jacobs", "Jahmyr Gibbs", "Jonathan Taylor", "Chuba Hubbard", "James Conner", "Aaron Jones", "Najee Harris", "Bucky Irving", "Tony Pollard", "Rico Dowdle", "Joe Mixon", "Chase Brown", "James Cook", "Alvin Kamara", "D'Andre Swift", "J.K. Dobbins", "Breece Hall", "Rhamondre Stevenson", "Brian Robinson Jr.", "De'Von Achane", "Tyrone Tracy Jr.", "Christian McCaffrey", "Kenneth Walker III", "Travis Etienne Jr.", "Javonte Williams", "Nick Chubb", "Zamir White"
+],
+            "RB2": ["David Montgomery", "Jordan Mason", "Tyler Allgeier", "Khalil Herbert", "Ray Davis", "Ty Johnson", "Braelon Allen", "Raheem Mostert", "Jaylen Wright", "Jamaal Williams", "Craig Reynolds", "Zack Moss", "Trey Benson", "Jerome Ford", "Jaylen Warren", "Keaton Mitchell", "Tank Bigsby", "Kareem Hunt", "Rachaad White", "Zach Charbonnet", "Antonio Gibson", "Emmanuel Wilson", "Devin Singletary", "Jaleel McLaughlin", "Alexander Mattison", "Cam Akers", "Gus Edwards", "Austin Ekeler", "Ameer Abdullah", "Justice Hill", "Blake Corum", "Ty Chandler", "Trey Sermon", "Roschon Johnson", "Miles Sanders", "Kendre Miller"
+],
+            "WR1": ["Chris Olave", "Zay Flowers", "Khalil Shakir", "Ja'Marr Chase", "Jerry Jeudy", "Courtland Sutton", "Nico Collins", "Michael Pittman", "Brian Thomas Jr.", "Xavier Worthy", "Ladd McConkey", "Jakobi Meyers", "Tyreek Hill", "Demario Douglas", "Davante Adams", "George Pickens", "Calvin Ridley", "Marvin Harrison Jr.", "Drake London", "Adam Thielen", "DJ Moore", "CeeDee Lamb", "Amon-Ra St. Brown", "Jayden Reed", "Puka Nacua", "Justin Jefferson", "Malik Nabers", "A.J. Brown", "DK Metcalf", "Deebo Samuel", "Mike Evans", "Terry McLaurin"],
+            "WR2": ["Brandin Cooks", "Marquez Valdes-Scantling", "Chris Godwin", "Stefon Diggs", "Rashod Bateman", "Amari Cooper", "Tee Higgins", "Elijah Moore", "Devaughn Vele", "John Metchie III", "Alec Pierce", "Parker Washington", "DeAndre Hopkins", "Quentin Johnston", "Tre Tucker", "Jaylen Waddle", "Kayshon Boutte", "Garrett Wilson", "Van Jefferson", "Nick Westbrook-Ikhine", "Michael Wilson", "Darnell Mooney", "Xavier Legette", "Keenan Allen", "Jalen Tolbert", "Jameson Williams", "Romeo Doubs", "Cooper Kupp", "Jordan Addison", "Kevin Austin Jr.", "Wan'Dale Robinson", "Jaxon Smith-Njigba", "Sterling Shepard", "Ray-Ray McCloud"],
+            "WR3": ["Mike Williams", "Tank Dell", "Nelson Agholor", "Keon Coleman", "Andrei Iosivas", "Michael Woods II", "Marvin Mims", "Robert Woods", "Josh Downs", "Josh Reynolds", "Marquise Brown", "Josh Palmer", "Terrace Marshall Jr.", "Malik Washington", "Kendrick Bourne", "Allen Lazard", "Calvin Austin III", "Tyler Boyd", "Greg Dortch", "Ray-Ray McCloud", "Jalen Coker", "Brandon Powell", "Demarcus Robinson", "Tim Patrick", "Christian Watson", "Rashid Shaheed", "Tutu Atwell", "Darius Slayton", "Malik Heath", "Trey Tucker", "Mecole Hardman", "Ainias Smith", "Marvin Harrison Jr."],
+            "WR4": ["Tylan Wallace", "Devontez Walker", "Steven Sims", "Anthony Miller", "Deonte Harty", "Mack Hollins", "Curtis Samuel", "Jermaine Burton", "Charlie Jones", "Isaiah Williams", "Kendric Pryor", "Jamari Thrash", "James Proche", "Kaden Davis", "Cedric Tillman", "David Bell", "Troy Franklin", "Lil'Jordan Humphrey", "Diontae Johnson", "Xavier Hutchinson", "Adonai Mitchell", "Ashton Dulin", "Anthony Gould", "Juwann Winfree", "Devin Duvernay", "Tim Jones", "Gabe Davis", "Justin Watson", "JuJu Smith-Schuster", "Nikko Remigio", "Simi Fehoko", "Brenden Rice", "Jalen Reagor", "Ramel Keyton", "DJ Turner", "River Cracraft", "D'Wayne Eskridge", "Erik Ezukanma", "Braxton Berrios", "Tahj Washington", "Grant DuBose", "Anthony Schwartz", "Javon Baker", "Alex Erickson", "Ja'Lynn Polk", "JaQuae Jackson", "Xavier Gipson", "Malachi Corley", "Malik Taylor", "Irvin Charles", "Scott Miller", "Ben Skowronek", "Roman Wilson", "Mason Kinsey", "Bryce Oliver", "Jha'Quan Jackson", "Tay Martin", "Colton Dowell", "Treylon Burks", "Zay Jones", "Zach Pascal", "Xavier Weaver", "Khadarel Hodge", "Chris Blair", "Casey Washington", "Rondale Moore", "Collin Johnson", "Tyler Scott", "DeAndre Carter", "Nsimba Webster", "Ryan Flournoy", "Jonathan Mingo", "Kalif Raymond", "Allen Robinson", "Dontayvion Wicks", "Bo Melton", "Malik Heath", "Trey Palmer", "Rakim Jarrett", "Kameron Johnson", "Bub Means", "Jamison Crowder", "Luke McCaffrey", "K.J. Osborn", "Noah Brown"],
+            "TE1": ["Brock Bowers", "Mark Andrews", "Dalton Kincaid", "Mike Gesicki", "David Njoku", "Adam Trautman", "Dalton Schultz", "Kylen Granson", "Evan Engram", "Travis Kelce", "Hayden Hurst", "Jonnu Smith", "Hunter Henry", "Tyler Conklin", "Pat Freiermuth", "Chigoziem Okonkwo", "Trey McBride", "Kyle Pitts", "Tommy Tremble", "Cole Kmet", "Jake Ferguson", "Sam LaPorta", "Tucker Kraft", "Tyler Higbee", "T.J. Hockenson", "Juwan Johnson", "Daniel Bellinger", "Dallas Goedert", "Noah Fant", "George Kittle", "Cade Otton", "Zach Ertz"],
+            "TE2": ["Michael Mayer", "Isaiah Likely", "Dawson Knox", "Drew Sample", "Blake Whiteheart", "Lucas Krull", "Irv Smith", "Cade Stover", "Brenton Strange", "Luke Farrell", "Peyton Hendershot", "Stone Smartt", "Harrison Bryant", "Julian Hill", "Austin Hooper", "Jeremy Ruckert", "Darnell Washington", "Nick Vannett", "Travis Vokolek", "Charlie Woerner", "Ross Dwelley", "Ja'Tavion Sanders", "Feleipe Franks", "Gerald Everett", "Marcedes Lewis", "Luke Schoonmaker", "Shane Zylstra", "Brevyn Spann-Ford", "Brock Wright", "Shane Zylstra", "John Stephens Jr.", "Brevyn Spann-Ford", "Ben Sims", "Hunter Long", "Colby Parkinson", "Foster Moreau", "Dallin Holker", "Chris Manhertz", "Theo Johnson", "Grant Calcaterra", "Pharaoh Brown", "AJ Barner", "Tyler Mabry", "Brady Russell", "Eric Saubert", "Brayden Willis", "Payne Durham", "Ko Kieft"],
+            "LT": ["Joe Alt", "Larry Borom", "Dion Dawkins", "Jonah Williams", "Jedrick Wills Jr.", "Garett Bolles", "Terron Armstead", "Braden Smith", "Cam Robinson", "Orlando Brown Jr.", "Rob Havenstein", "Kolton Miller", "Christian Darrisaw", "George Fant", "Dan Moore Jr.", "Taylor Lewan", "D.J. Humphries", "Jake Matthews", "Ikem Ekwonu", "Teven Jenkins", "Tyron Smith", "Taylor Decker", "David Bakhtiari", "Joe Noteboom", "Christian Darrisaw", "James Hurst", "Jordan Mailata", "Charles Cross", "Trent Williams", "Donovan Smith", "Charles Leno Jr"],
+            "LG": ["Isaiah Adams", "Matthew Bergeron", "Ben Cleveland", "David Edwards", "Brady Christensen", "Cody Whitehair", "Alex Cappa", "Joel Bitonio", "T.J. Bass", "Cody Powers", "Jonah Jackson", "Elgton Jenkins", "Kenyon Green", "Quenton Nelson", "Brandon Scherff", "Joe Thuney", "Parham Dylan", "Jamaree Salyer", "Robert Hunt", "Ed Ingram", "David Andrews", "Mark Glowinski", "Landon Dickerson", "Aaron Banks", "Luke Goedeke", "Nate Davis", "Sam Cosmi"],
+            "C": ["Graham Barton", "Tyler Biadasz", "Bradley Bozeman", "Garrett Bradbury", "Jake Brendel", "Evan Brown", "Will Clapp", "Drew Dalman", "Alex Forsyth", "Luke Fortner", "Zach Frazier", "Nick Gates", "Jake Hanson", "Brock Hoffman", "Creed Humphrey", "Andre James", "Ted Karras", "Ryan Kelly", "Doug Kramer Jr.", "Shane Lemieux", "Corey Levin", "Beaux Limmer", "Tyler Linderbaum", "Andrew Meyer", "Jacob Monk", "Ethan Pocic", "John Michael Schmitz Jr.", "Jarrett Patterson", "Frank Ragnow", "Lecitus Smith", "Olu Oluwatimi", "Coleman Shelton"],
+            "RG": ["Zack Bailey", "T.J. Bass", "Lester Cotton", "Ben Powers", "Brendan Scherff", "Cody Whitehair", "Mark Glowinski", "Shaq Mason", "Ben Powers", "Chris Lindstrom", "Nate Davis", "Robert Hunt", "Joe Thuney", "Wyatt Teller", "Trey Smith", "Elijah Vera-Tucker", "Dalton Risner", "Laken Tomlinson", "Jackson Powers-Johnson", "Isaac Seumalo", "Kevin Zeitler"],
+            "RT": ["Tristan Wirfs", "Brandon Scherff", "Ryan Ramczyk", "Lane Johnson", "Jack Conklin", "Morgan Moses", "Isaiah Wynn", "Riley Reiff", "Matt Feiler", "Brian O'Neill", "Tytus Howard", "Evan Neal", "Chukwuma Okorafor", "Jawan Taylor", "Penei Sewell", "Jack Driscoll", "Tayler Lewan", "Laremy Tunsil", "Vederian Lowe", "Caleb Jones", "Nicholas Petit-Frere", "Matt Peart"],
+            "DT1": ["Ed Oliver", "Naquan Jones", "Travis Jones", "David Onyemata", "Shy Tuttle", "Gervon Dexter Sr.", "B.J. Hill", "Dalvin Tomlinson", "Osa Odighizuwa", "DJ Jones", "Alim McNeill", "Kenny Clark", "Folorunso Fatukasi", "DeForest Buckner", "Arik Armstead", "Chris Jones", "John Jenkins", "Otito Ogbonnia", "Bobby Brown III", "Benito Jones", "Harrison Phillips", "Davon Godchaux", "Bryan Bresee", "Dexter Lawrence II", "Quinnen Williams", "Jordan Davis", "Keeanu Benton", "Javon Hargrave", "Johnathan Hankins", "Vita Vea", "T'Vondre Sweat", "Johnathan Allen"],
+            "DT2": ["Grover Stewart", "DJ Reader", "Michael Pierce", "DaQuan Jones", "Poona Ford", "Byron Murphy II", "Maurice Hurst", "Shelby Harris", "Tershawn Wharton", "Maliek Collins", "Jer'Zhan Newton", "Teair Tart", "Eddie Goldman", "Derrick Nnadi", "Sheldon Rankins", "Andrew Billings", "DaVon Hamilton", "Devonte Wyatt", "Kris Jenkins Jr."],
+            "MLB1": ["Fred Warner", "Roquan Smith", "C.J. Mosley", "Demario Davis", "Bobby Wagner", "Lavonte David", "Bobby Okereke", "Zack Baun", "Devin Lloyd", "Blake Cashman", "Jack Campbell", "Nick Bolton", "Patrick Queen", "Eric Kendricks", "Kaden Elliss", "Robert Spillane", "Azeez Al-Shaair", "Ja'Whaun Bentley", "Jordan Hicks", "Shaq Thompson", "Tremaine Edmunds", "Cody Barton", "Daiyan Henley", "Ernest Jones IV", "Jordyn Brooks", "Zaire Franklin", "Germaine Pratt", "Terrel Bernard", "Edgerrin Cooper", "Jerome Baker", "Kyzir White", "Omar Speights"],
+            "MLB2": ["Cole Holcomb", "Alex Singleton", "Ivan Pace Jr.", "Denzel Perryman", "Elandon Roberts", "Nakobe Dean", "Mack Wilson Sr.", "Trenton Simpson", "Anthony Walker Jr.", "Jack Gibbens", "Josey Jewell", "Micah McFadden", "Payton Wilson", "Tyrel Dodson", "Henry To'o'To'o", "Jamien Sherwood", "Christian Rozeboom", "Devine Deablo", "Kenneth Murray Jr.", "Krys Barnes", "Derrick Barnes", "Malik Harrison", "Nate Landman", "Tyrice Knight", "Junior Colson"],
+            "ROLB": ["Khalil Mack", "Alex Highsmith", "Dre Greenlaw", "Brian Burns", "Foyesade Oluokun", "Jeremiah Owusu-Koramoah", "Matt Milano", "Josh Sweat", "Quincy Williams", "Johnathan Greenard", "Odafe Oweh", "T.J. Edwards", "Drue Tranquill", "Frankie Luvu", "Logan Wilson", "Bradley Chubb", "Matthew Judon", "Alex Anzalone", "Jahlani Tavai", "Quay Walker", "Yaya Diaby", "Byron Young", "Jonathon Cooper", "Pete Werner", "Shaquil Barrett", "Chop Robinson", "D.J. Wonnum", "DeMarvion Overshown", "Derick Hall", "E.J. Speed", "Dennis Gardeck", "Nick Herbig", "Dorian Williams", "Dre'Mont Jones", "Arden Key", "Bud Dupree", "Dallas Turner", "Anthony Nelson", "Damone Clark", "Oshane Ximines", "Tyree Wilson", "Zach Cunningham", "Adisa Isaac", "Akeen Davis-Gaither", "Chris Braswell", "Christian Harris", "Devin White", "DJ Johnson"],
+            "LOLB": ["Micah Parsons", "Maxx Crosby", "T.J. Watt", "Andrew Van Ginkel", "Joey Bosa", "Leo Chenal", "Jaelan Phillips", "Kyle Van Noy", "Jared Verse", "Nik Bonitto", "Harold Landry III", "Zaven Collins", "Brandon Graham", "Jadeveon Clowney", "Boye Mafe", "Kayvon Thibodeaux", "Malcolm Rodriguez", "Nolan Smith Jr.", "Devin Bush", "Preston Smith", "Anfernee Jennings", "Arnold Ebiketie", "Uchenna Nwosu", "Baron Browning", "Bryce Huff", "Emmanuel Ogbah", "Sione Takitaki", "Tuli Tuipulotu", "Willie Gay", "Azeez Ojulari", "Eric Wilson", "Joe Tryon-Shoyinka", "K'Lavon Chaisson", "Michael Hoecht", "De'Vondre Campbell", "Jonah Elliss", "BJ Ojulari"],
+            "RE": ["Myles Garrett", "Cameron Heyward", "Danielle Hunter", "Trey Hendrickson", "Josh Hines-Allen", "Derrick Brown", "Jeffrey Simmons", "Von Miller", "Kobie Turner", "Za'Darius Smith", "Grady Jarrett", "Calais Campbell", "Cameron Jordan", "Chase Young", "Jermaine Johnson II", "John Franklin-Myers", "Milton Williams", "Calijah Kancey", "Haason Reddick", "Keion White", "Dante Fowler Jr.", "Jarran Reed", "Leonard Floyd", "Mike Danna", "Charles Omenihu", "Denico Autry", "Laiatu Latu", "A.J. Epenesa", "Joshua Uche", "Samson Ebukam"],
+            "LE": ["Nick Bosa", "Aidan Hutchinson", "Nnamdi Madubuike", "DeMarcus Lawrence", "Greg Rousseau", "Jalen Carter", "Will Anderson Jr.", "Christian Wilkins", "Leonard Williams", "George Karlaftis", "Rashan Gary", "Montez Sweat", "Zach Allen", "Carl Granderson", "Zach Sieler", "Christian Barmore", "Travon Walker", "Braden Fiske", "Dorance Armstrong", "Kwity Paye", "Sam Hubbard", "Sebastian Joseph-Day", "Will McDonald IV", "Larry Ogunjobi", "Chauncey Golston", "Dayo Odeyingbo", "Marcus Davenport", "Derek Barnett", "Drake Jackson", "Josh Pascal"],
+            "CB1": ["Patrick Surtain II", "Jalen Ramsey", "Sauce Gardner", "Marlon Humphrey", "Trent McDuffie", "Jaire Alexander", "Denzel Ward", "Derek Stingley Jr.", "Christian Gonzalez", "A.J. Terrell Jr.", "Marshon Lattimore", "DaRon Bland", "Devon Witherspoon", "Jaylon Johnson", "Kenny Moore II", "Charvarius Ward", "Darius Slay Jr.", "L'Jarius Sneed", "Jamel Dean", "Carlton Davis III", "Christian Benford", "Jaycee Horn", "Byron Murphy Jr.", "Asante Samuel Jr.", "Joey Porter Jr.", "Paulson Adebo", "Cam Taylor-Britt", "Darious Williams", "Garrett Williams", "Nate Hobbs", "Dru Phillips", "Tyson Campbell"],
+            "CB2": ["Quinyon Mitchell", "DJ Reed", "Keisean Nixon", "Terrion Arnold", "Mike Jackson", "Jonathan Jones", "Jack Jones", "Ahkello Witherspoon", "Nate Wiggins", "Kool-Aid McKinstry", "Donte Jackson", "Riq Woolen", "Kamari Lassiter", "Chidobe Awuzie", "Stephon Gilmore", "Kyler Gordon", "Mike Hilton", "Taron Johnson", "Riley Moss", "Greg Newsome II", "Zyon McCollum", "Tarheeb Still", "Sean Murphy-Bunting", "Jaylen Watson", "Samuel Womack III", "Mikey Sainristil", "Trevon Diggs", "Clark Phillips III", "Kendall Fuller", "Deommodore Lenoir", "Adoree' Jackson", "Jerrion Jones"],
+            "CB3": ["Tyrique Stevenson", "DJ Turner II", "Rasul Douglas", "Ja'Quan McMillan", "Martin Emerson Jr", "Troy Hill", "Max Melton", "Kristian Fulton", "Joshua Williams", "Jayon Jones", "Benjamin St-Juste", "Jourdan Lewis", "Kader Kohou", "Cooper DeJean", "Mike Hughes", "Renardo Green", "Cor'Dale Flott", "Ronald Darby", "Michael Carter II", "Emmanuel Moseley", "Eric Stokes", "Dane Jackson", "Marcus Jones", "Darnay Holmes", "Cobie Durant", "Brandon Stevens", "Ugo Amadi", "Cam Sutton", "Trey Brown", "Myles Bryant", "Roger McCreary", "Shaquille Griffin"],
+            "CB4": ["Jaylon Jones", "Dax Hill", "Isiah Rodgers Sr", "Darrell Baker", "Kaiir Elam", "Avonte Maddox", "Beanie Bishop Jr", "Deonte Banks", "Fabian Moreau", "Ja'Quan McMillan", "Xavien Howard", "Amik Robertson", "Bryce Hall", "Carrington Valentine", "Chamarri Conner", "JuJu Brents", "Kelee Ringo", "Tre'Davious White", "Tre Brown", "Eli Apple", "Jakorian Bennett"],
+            "FS": ["Jessie Bates III", "Minkah Fitzpatrick", "Antoine Winfield Jr.", "Kerby Joseph", "Julian Love", "Jabrill Peppers", "Justin Simmons", "Kevin Byard III", "Tyrann Mathieu", "Brandon Jones", "Cam Bynum", "Jalen Pitre", "Jevon Holland", "Tre'Von Moehrig", "Jalen Thompson", "Quandre Diggs", "Elijah Molden", "Reed Blankenship", "Ar'Darius Washington", "Geno Stone", "Malik Hooker", "Alohi Gilman", "Andre Cisco", "Bryan Cook", "Ji'Ayir Brown", "John Johnson III", "Jordan Fuller", "Marcus Williams", "Juan Thornhill", "Nick Cross", "Quan Martin", "Tashaun Gipson Sr.", "Tony Adams", "Calen Bullock", "Javon Bullard", "Kamren Kinchens", "Quentin Lake"],
+            "SS": ["Budda Baker", "Derwin James", "Xavier McKinney", "Kyle Hamilton", "Brian Branch", "Justin Reid", "Harrison Smith", "C.J. Gardner-Johnson", "Jordan Poyer", "Jimmie Ward", "Talanoa Hufanga", "Jaquan Brisker", "Josh Metellus", "Deshon Elliott", "Jeremy Chinn", "Grant Delpit", "Taylor Rapp", "Xavier Woods", "Julian Blackmon", "Kyle Dugger", "Kamren Curl", "Rayshawn Jenkins", "Amani Hooker", "Chuck Clark", "James Bradberry IV", "Marcus Epps", "Jonathan Owens", "Jordan Whitehead", "Tyler Nubin", "Vonn Bell", "Donovan Wilson"]
+        };
+
+        let lockedPlayers = {};  // Track locked players for each position
+
+        // Function to generate positions
+        function displayPositions() {
+            const positions = [...offensePositions, ...defensePositions];  // Combine offense and defense positions
+            const container = document.getElementById('positions-container');
+            container.innerHTML = '';  // Clear current positions
+
+            positions.forEach(position => {
+                // Create the position name
+                const nameElement = document.createElement('div');
+                nameElement.classList.add('position-name');
+                nameElement.innerText = position;
+
+                // Create the position box
+                const box = document.createElement('div');
+                box.classList.add('position-box');
+                box.setAttribute('data-position', position);
+
+                // Add click event for locking the player
+                box.addEventListener('click', () => lockPlayer(position));
+
+                // Append position name and box to container
+                container.appendChild(nameElement);
+                container.appendChild(box);
+            });
+        }
+
+        // Function to generate a random player for each position
+        function generateRandomPlayers() {
+            const positions = [...offensePositions, ...defensePositions];
+
+            positions.forEach(position => {
+                // Only generate a player for positions that aren't locked
+                if (!lockedPlayers[position]) {
+                    const player = getRandomPlayer(position);
+                    const positionBox = document.querySelector(`[data-position='${position}']`);
+                    positionBox.innerText = player;
+                }
+            });
+        }
+
+        // Function to get a random player for a given position
+        function getRandomPlayer(position) {
+            const availablePlayers = players[position];
+            return availablePlayers[Math.floor(Math.random() * availablePlayers.length)];
+        }
+
+        // Function to lock a player into a position
+        function lockPlayer(position) {
+            const player = document.querySelector(`[data-position='${position}']`).innerText;
+
+            // Lock player only if they aren't already locked
+            if (!lockedPlayers[position]) {
+                lockedPlayers[position] = player;
+                document.querySelector(`[data-position='${position}']`).classList.add('locked');
+            }
+        }
+
+        // Event listener for generate button
+        document.getElementById('generate-btn').addEventListener('click', generateRandomPlayers);
+
+        // Start by displaying positions and generating random players
+        displayPositions();
+    </script>
+
+</body>
+</html>
